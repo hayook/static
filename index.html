@@ -4,7 +4,345 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Premium Split Slider Portfolio</title>
-  <link rel="stylesheet" href="/static/main.css">
+  <style>
+/* =========================================
+   Variables & Core Reset
+   ========================================= */
+:root {
+  --bg-dark: #070709;
+  --bg-lighter: #121216;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --accent: #38bdf8;
+  
+  /* The exact easing curve used by Apple and high-end agencies */
+  --ease-custom: cubic-bezier(0.77, 0, 0.175, 1);
+  --transition-speed: 1s;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /* Crucial: Lock native scrolling for the desktop split-screen experience */
+  overflow: hidden; 
+  height: 100vh;
+  width: 100vw;
+}
+
+/* =========================================
+   The Split Slider Framework
+   ========================================= */
+.slider-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+}
+
+/* Left Side: Typography & Info */
+.left-panel {
+  width: 40%;
+  height: 100%;
+  position: relative;
+  background-color: var(--bg-dark);
+  z-index: 10;
+  transition: transform var(--transition-speed) var(--ease-custom);
+  will-change: transform;
+}
+
+/* Right Side: Visuals */
+.right-panel {
+  width: 60%;
+  height: 100%;
+  position: absolute;
+  left: 40%;
+  /* The right panel starts offset negatively by the total number of slides minus 1.
+	JS will handle this dynamically, but we set a fallback height.
+  */
+  height: 300vh; 
+  transition: transform var(--transition-speed) var(--ease-custom);
+  will-change: transform;
+}
+
+/* Individual Full-Screen Sections */
+.slide-content, .slide-visual {
+  width: 100%;
+  height: 100vh; /* Exactly one viewport high */
+  position: relative;
+}
+
+/* =========================================
+   Left Panel Design (The Data)
+   ========================================= */
+.slide-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 15% 0 10%;
+}
+
+.project-index {
+  font-family: ui-monospace, monospace;
+  font-size: 1rem;
+  color: var(--accent);
+  margin-bottom: 2rem;
+  letter-spacing: 0.1em;
+  overflow: hidden;
+}
+
+.project-title {
+  font-size: clamp(2.5rem, 4vw, 4rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  color: #ffffff;
+}
+
+.project-desc {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+}
+
+.tech-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 3rem;
+  list-style: none;
+}
+
+.tech-stack li {
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.4rem 1rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+
+.action-links {
+  display: flex;
+  gap: 2rem;
+}
+
+.action-links a {
+  color: var(--text-main);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Elegant hover underline */
+.action-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--text-main);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.4s var(--ease-custom);
+}
+
+.action-links a:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Staggered Text Reveal Animation for the active slide */
+.slide-content > * {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.6s var(--ease-custom);
+}
+
+.slide-content.is-active > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.slide-content.is-active .project-index { transition-delay: 0.4s; }
+.slide-content.is-active .project-title { transition-delay: 0.5s; }
+.slide-content.is-active .project-desc { transition-delay: 0.6s; }
+.slide-content.is-active .tech-stack { transition-delay: 0.7s; }
+.slide-content.is-active .action-links { transition-delay: 0.8s; }
+
+/* =========================================
+   Right Panel Design (The Visuals)
+   ========================================= */
+.slide-visual {
+  background-color: var(--bg-lighter);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.slide-visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Scale image slightly for a premium parallax settling effect */
+  transform: scale(1.1);
+  transition: transform 1.5s var(--ease-custom);
+}
+
+.slide-visual.is-active img {
+  transform: scale(1);
+}
+
+/* Sleek Backend / Code Layout Fallback */
+.code-terminal {
+  width: 80%;
+  max-width: 600px;
+  background: #000;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(40px);
+  opacity: 0;
+  transition: all 1s var(--ease-custom);
+}
+
+.slide-visual.is-active .code-terminal {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.terminal-header {
+  background: #111;
+  padding: 1rem 1.5rem;
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.term-dot { width: 12px; height: 12px; border-radius: 50%; background: #333; }
+.term-dot:nth-child(1) { background: #ff5f56; }
+.term-dot:nth-child(2) { background: #ffbd2e; }
+.term-dot:nth-child(3) { background: #27c93f; }
+
+.terminal-body {
+  padding: 2rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: #a1a1aa;
+}
+.keyword { color: #c678dd; }
+.function { color: #61afef; }
+.string { color: #98c379; }
+
+/* =========================================
+   UI Controls (Pagination)
+   ========================================= */
+.slider-controls {
+  position: fixed;
+  left: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dot.is-active {
+  background: var(--text-main);
+  transform: scale(1.5);
+}
+
+/* =========================================
+   Mobile Fallback (Crucial for UX)
+   ========================================= */
+@media (max-width: 900px) {
+  /* Kill the split slider mechanics on mobile and revert to a sleek standard scroll */
+  body {
+	overflow-y: auto;
+	overflow-x: hidden;
+	height: auto;
+  }
+
+  .slider-container {
+	display: flex;
+	flex-direction: column;
+	height: auto;
+  }
+
+  .left-panel, .right-panel {
+	position: relative;
+	width: 100%;
+	height: auto;
+	left: auto;
+	top: auto !important; /* Override JS inline styles */
+	transform: none !important; /* Override JS inline styles */
+	transition: none;
+  }
+
+  .slide-content {
+	height: auto;
+	padding: 4rem 2rem;
+	border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .slide-content > * {
+	opacity: 1;
+	transform: none;
+  }
+
+  .slide-visual {
+	height: 50vh;
+  }
+
+  .slider-controls {
+	display: none;
+  }
+
+  /* Interleave the content and visuals using Flex Order */
+  .slider-container { display: contents; }
+  .left-panel, .right-panel { display: contents; }
+  
+  /* Order mapping for 3 projects */
+  .slide-visual:nth-child(3) { order: 1; }
+  .slide-content:nth-child(1) { order: 2; }
+  
+  .slide-visual:nth-child(2) { order: 3; }
+  .slide-content:nth-child(2) { order: 4; }
+  
+  .slide-visual:nth-child(1) { order: 5; }
+  .slide-content:nth-child(3) { order: 6; }
+}
+  </style>
 </head>
 <body>
 
