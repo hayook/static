@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium Split Slider Portfolio</title>
+  <link rel="stylesheet" href="./main.css">
+</head>
+<body>
+
+  <div class="slider-controls" id="dots-container"></div>
+
+  <main class="slider-container">
+    
+    <div class="left-panel" id="left-panel">
+      
+      <div class="slide-content is-active" data-index="0">
+        <div class="project-index">01 / 03</div>
+        <h2 class="project-title">Vanguard Engine</h2>
+        <p class="project-desc">A highly performant WebGL rendering pipeline engineered to handle massive architectural CAD models natively in the browser without frame-drops.</p>
+        <ul class="tech-stack">
+          <li>TypeScript</li>
+          <li>Three.js</li>
+          <li>Web Workers</li>
+        </ul>
+        <div class="action-links">
+          <a href="#">Live Demo ↗</a>
+          <a href="#">GitHub ↗</a>
+        </div>
+      </div>
+
+      <div class="slide-content" data-index="1">
+        <div class="project-index">02 / 03</div>
+        <h2 class="project-title">Nexus Event Bus</h2>
+        <p class="project-desc">A highly concurrent, distributed event bus written in Rust. Handles millions of payloads per second across microservices with zero-latency data reflection.</p>
+        <ul class="tech-stack">
+          <li>Rust</li>
+          <li>gRPC</li>
+          <li>Kafka</li>
+        </ul>
+        <div class="action-links">
+          <a href="#">Documentation ↗</a>
+          <a href="#">Architecture ↗</a>
+        </div>
+      </div>
+
+      <div class="slide-content" data-index="2">
+        <div class="project-index">03 / 03</div>
+        <h2 class="project-title">Aero Analytics</h2>
+        <p class="project-desc">Real-time data visualization dashboard designed for aerospace diagnostics. Capable of rendering high-frequency streaming data using GPU acceleration.</p>
+        <ul class="tech-stack">
+          <li>React 18</li>
+          <li>D3.js</li>
+          <li>Tailwind CSS</li>
+        </ul>
+        <div class="action-links">
+          <a href="#">Case Study ↗</a>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="right-panel" id="right-panel">
+      
+      <div class="slide-visual" data-index="2">
+        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1600&auto=format&fit=crop" alt="Aero Analytics">
+      </div>
+
+      <div class="slide-visual" data-index="1">
+        <div class="code-terminal">
+          <div class="terminal-header">
+            <div class="term-dot"></div><div class="term-dot"></div><div class="term-dot"></div>
+          </div>
+          <div class="terminal-body">
+            <div><span class="keyword">use</span> std::sync::Arc;</div>
+            <div><span class="keyword">use</span> tokio::sync::broadcast;</div>
+            <br>
+            <div><span class="keyword">pub struct</span> EventBus {</div>
+            <div>&nbsp;&nbsp;sender: broadcast::Sender&lt;Payload&gt;,</div>
+            <div>}</div>
+            <br>
+            <div><span class="keyword">impl</span> EventBus {</div>
+            <div>&nbsp;&nbsp;<span class="keyword">pub fn</span> <span class="function">new</span>(capacity: usize) -> <span class="keyword">Self</span> {</div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> (tx, _) = broadcast::channel(capacity);</div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Self</span> { sender: tx }</div>
+            <div>&nbsp;&nbsp;}</div>
+            <div>}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-visual is-active" data-index="0">
+        <img src="https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?q=80&w=1600&auto=format&fit=crop" alt="Vanguard Engine">
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Core Elements
+      const leftPanel = document.getElementById('left-panel');
+      const rightPanel = document.getElementById('right-panel');
+      const leftSlides = document.querySelectorAll('.slide-content');
+      const rightSlides = document.querySelectorAll('.slide-visual');
+      const dotsContainer = document.getElementById('dots-container');
+      
+      const slideLength = leftSlides.length;
+      let activeIndex = 0;
+      let isAnimating = false;
+
+      // 1. Initial Setup
+      // Position the right panel so the last element in its DOM (Visual 1) is visible at the top.
+      rightPanel.style.top = `-${(slideLength - 1) * 100}vh`;
+
+      // Generate Pagination Dots
+      for (let i = 0; i < slideLength; i++) {
+        const dot = document.createElement('div');
+        dot.classList.add('dot');
+        if (i === 0) dot.classList.add('is-active');
+        dot.addEventListener('click', () => changeSlide(i));
+        dotsContainer.appendChild(dot);
+      }
+      const dots = document.querySelectorAll('.dot');
+
+      // 2. Core Transition Logic
+      const changeSlide = (index) => {
+        // Prevent action if currently animating, out of bounds, or already on the requested slide
+        if (isAnimating || index < 0 || index >= slideLength || index === activeIndex) return;
+        
+        isAnimating = true;
+        activeIndex = index;
+
+        // Apply Translations
+        // Left goes UP (negative)
+        leftPanel.style.transform = `translateY(-${activeIndex * 100}vh)`;
+        // Right goes DOWN (positive)
+        rightPanel.style.transform = `translateY(${activeIndex * 100}vh)`;
+
+        // Update CSS classes for text staggers and image settling
+        leftSlides.forEach(slide => slide.classList.remove('is-active'));
+        rightSlides.forEach(slide => slide.classList.remove('is-active'));
+        dots.forEach(dot => dot.classList.remove('is-active'));
+
+        // Target the specific slides
+        document.querySelector(`.slide-content[data-index="${activeIndex}"]`).classList.add('is-active');
+        document.querySelector(`.slide-visual[data-index="${activeIndex}"]`).classList.add('is-active');
+        dots[activeIndex].classList.add('is-active');
+
+        // Unlock after CSS transition duration (1000ms)
+        setTimeout(() => {
+          isAnimating = false;
+        }, 1000); 
+      };
+
+      // 3. Event Listeners (Scroll & Keyboard)
+      
+      // Mouse Wheel Hijacking
+      window.addEventListener('wheel', (e) => {
+        // Disable JS scrolling on mobile screens where standard CSS scrolling takes over
+        if (window.innerWidth <= 900) return;
+        
+        if (e.deltaY > 0) {
+          changeSlide(activeIndex + 1); // Scroll Down -> Next Slide
+        } else if (e.deltaY < 0) {
+          changeSlide(activeIndex - 1); // Scroll Up -> Prev Slide
+        }
+      });
+
+      // Keyboard Navigation
+      window.addEventListener('keydown', (e) => {
+        if (window.innerWidth <= 900) return;
+
+        if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+          changeSlide(activeIndex + 1);
+        } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+          changeSlide(activeIndex - 1);
+        }
+      });
+
+      // Touch Swiping (For tablets in landscape, or generic touch devices > 900px width)
+      let touchStartY = 0;
+      window.addEventListener('touchstart', (e) => {
+        touchStartY = e.touches[0].clientY;
+      });
+      window.addEventListener('touchend', (e) => {
+        if (window.innerWidth <= 900) return;
+        const touchEndY = e.changedTouches[0].clientY;
+        const delta = touchStartY - touchEndY;
+        
+        if (delta > 50) {
+          changeSlide(activeIndex + 1); // Swiped up
+        } else if (delta < -50) {
+          changeSlide(activeIndex - 1); // Swiped down
+        }
+      });
+    });
+  </script>
+</body>
+</html>
