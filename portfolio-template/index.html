@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium Split Slider Portfolio</title>
+  <style>
+    /* =========================================
+       Variables & Core Reset
+       ========================================= */
+    :root {
+      --bg-dark: #070709;
+      --bg-lighter: #121216;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      
+      /* The exact easing curve used by Apple and high-end agencies */
+      --ease-custom: cubic-bezier(0.77, 0, 0.175, 1);
+      --transition-speed: 1s;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      /* Crucial: Lock native scrolling for the desktop split-screen experience */
+      overflow: hidden; 
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* =========================================
+       The Split Slider Framework
+       ========================================= */
+    .slider-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+    }
+
+    /* Left Side: Typography & Info */
+    .left-panel {
+      width: 40%;
+      height: 100%;
+      position: relative;
+      background-color: var(--bg-dark);
+      z-index: 10;
+      transition: transform var(--transition-speed) var(--ease-custom);
+      will-change: transform;
+    }
+
+    /* Right Side: Visuals */
+    .right-panel {
+      width: 60%;
+      height: 100%;
+      position: absolute;
+      left: 40%;
+      /* The right panel starts offset negatively by the total number of slides minus 1.
+        JS will handle this dynamically, but we set a fallback height.
+      */
+      height: 300vh; 
+      transition: transform var(--transition-speed) var(--ease-custom);
+      will-change: transform;
+    }
+
+    /* Individual Full-Screen Sections */
+    .slide-content, .slide-visual {
+      width: 100%;
+      height: 100vh; /* Exactly one viewport high */
+      position: relative;
+    }
+
+    /* =========================================
+       Left Panel Design (The Data)
+       ========================================= */
+    .slide-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 15% 0 10%;
+    }
+
+    .project-index {
+      font-family: ui-monospace, monospace;
+      font-size: 1rem;
+      color: var(--accent);
+      margin-bottom: 2rem;
+      letter-spacing: 0.1em;
+      overflow: hidden;
+    }
+
+    .project-title {
+      font-size: clamp(2.5rem, 4vw, 4rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+      color: #ffffff;
+    }
+
+    .project-desc {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 2.5rem;
+    }
+
+    .tech-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 3rem;
+      list-style: none;
+    }
+
+    .tech-stack li {
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 0.4rem 1rem;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #e2e8f0;
+    }
+
+    .action-links {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .action-links a {
+      color: var(--text-main);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Elegant hover underline */
+    .action-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: var(--text-main);
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.4s var(--ease-custom);
+    }
+
+    .action-links a:hover::after {
+      transform: scaleX(1);
+      transform-origin: left;
+    }
+
+    /* Staggered Text Reveal Animation for the active slide */
+    .slide-content > * {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.6s var(--ease-custom);
+    }
+    
+    .slide-content.is-active > * {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .slide-content.is-active .project-index { transition-delay: 0.4s; }
+    .slide-content.is-active .project-title { transition-delay: 0.5s; }
+    .slide-content.is-active .project-desc { transition-delay: 0.6s; }
+    .slide-content.is-active .tech-stack { transition-delay: 0.7s; }
+    .slide-content.is-active .action-links { transition-delay: 0.8s; }
+
+    /* =========================================
+       Right Panel Design (The Visuals)
+       ========================================= */
+    .slide-visual {
+      background-color: var(--bg-lighter);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .slide-visual img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      /* Scale image slightly for a premium parallax settling effect */
+      transform: scale(1.1);
+      transition: transform 1.5s var(--ease-custom);
+    }
+
+    .slide-visual.is-active img {
+      transform: scale(1);
+    }
+
+    /* Sleek Backend / Code Layout Fallback */
+    .code-terminal {
+      width: 80%;
+      max-width: 600px;
+      background: #000;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(40px);
+      opacity: 0;
+      transition: all 1s var(--ease-custom);
+    }
+
+    .slide-visual.is-active .code-terminal {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .terminal-header {
+      background: #111;
+      padding: 1rem 1.5rem;
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .term-dot { width: 12px; height: 12px; border-radius: 50%; background: #333; }
+    .term-dot:nth-child(1) { background: #ff5f56; }
+    .term-dot:nth-child(2) { background: #ffbd2e; }
+    .term-dot:nth-child(3) { background: #27c93f; }
+
+    .terminal-body {
+      padding: 2rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: #a1a1aa;
+    }
+    .keyword { color: #c678dd; }
+    .function { color: #61afef; }
+    .string { color: #98c379; }
+
+    /* =========================================
+       UI Controls (Pagination)
+       ========================================= */
+    .slider-controls {
+      position: fixed;
+      left: 2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .dot.is-active {
+      background: var(--text-main);
+      transform: scale(1.5);
+    }
+
+    /* =========================================
+       Mobile Fallback (Crucial for UX)
+       ========================================= */
+    @media (max-width: 900px) {
+      /* Kill the split slider mechanics on mobile and revert to a sleek standard scroll */
+      body {
+        overflow-y: auto;
+        overflow-x: hidden;
+        height: auto;
+      }
+
+      .slider-container {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+      }
+
+      .left-panel, .right-panel {
+        position: relative;
+        width: 100%;
+        height: auto;
+        left: auto;
+        top: auto !important; /* Override JS inline styles */
+        transform: none !important; /* Override JS inline styles */
+        transition: none;
+      }
+
+      .slide-content {
+        height: auto;
+        padding: 4rem 2rem;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+      }
+
+      .slide-content > * {
+        opacity: 1;
+        transform: none;
+      }
+
+      .slide-visual {
+        height: 50vh;
+      }
+
+      .slider-controls {
+        display: none;
+      }
+
+      /* Interleave the content and visuals using Flex Order */
+      .slider-container { display: contents; }
+      .left-panel, .right-panel { display: contents; }
+      
+      /* Order mapping for 3 projects */
+      .slide-visual:nth-child(3) { order: 1; }
+      .slide-content:nth-child(1) { order: 2; }
+      
+      .slide-visual:nth-child(2) { order: 3; }
+      .slide-content:nth-child(2) { order: 4; }
+      
+      .slide-visual:nth-child(1) { order: 5; }
+      .slide-content:nth-child(3) { order: 6; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="slider-controls" id="dots-container"></div>
+
+  <main class="slider-container">
+    
+    <div class="left-panel" id="left-panel">
+      
+      <div class="slide-content is-active" data-index="0">
+        <div class="project-index">01 / 03</div>
+        <h2 class="project-title">Vanguard Engine</h2>
+        <p class="project-desc">A highly performant WebGL rendering pipeline engineered to handle massive architectural CAD models natively in the browser without frame-drops.</p>
+        <ul class="tech-stack">
+          <li>TypeScript</li>
+          <li>Three.js</li>
+          <li>Web Workers</li>
+        </ul>
+        <div class="action-links">
+          <a href="#">Live Demo ↗</a>
+          <a href="#">GitHub ↗</a>
+        </div>
+      </div>
+
+      <div class="slide-content" data-index="1">
+        <div class="project-index">02 / 03</div>
+        <h2 class="project-title">Nexus Event Bus</h2>
+        <p class="project-desc">A highly concurrent, distributed event bus written in Rust. Handles millions of payloads per second across microservices with zero-latency data reflection.</p>
+        <ul class="tech-stack">
+          <li>Rust</li>
+          <li>gRPC</li>
+          <li>Kafka</li>
+        </ul>
+        <div class="action-links">
+          <a href="#">Documentation ↗</a>
+          <a href="#">Architecture ↗</a>
+        </div>
+      </div>
+
+      <div class="slide-content" data-index="2">
+        <div class="project-index">03 / 03</div>
+        <h2 class="project-title">Aero Analytics</h2>
+        <p class="project-desc">Real-time data visualization dashboard designed for aerospace diagnostics. Capable of rendering high-frequency streaming data using GPU acceleration.</p>
+        <ul class="tech-stack">
+          <li>React 18</li>
+          <li>D3.js</li>
+          <li>Tailwind CSS</li>
+        </ul>
+        <div class="action-links">
+          <a href="#">Case Study ↗</a>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="right-panel" id="right-panel">
+      
+      <div class="slide-visual" data-index="2">
+        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1600&auto=format&fit=crop" alt="Aero Analytics">
+      </div>
+
+      <div class="slide-visual" data-index="1">
+        <div class="code-terminal">
+          <div class="terminal-header">
+            <div class="term-dot"></div><div class="term-dot"></div><div class="term-dot"></div>
+          </div>
+          <div class="terminal-body">
+            <div><span class="keyword">use</span> std::sync::Arc;</div>
+            <div><span class="keyword">use</span> tokio::sync::broadcast;</div>
+            <br>
+            <div><span class="keyword">pub struct</span> EventBus {</div>
+            <div>&nbsp;&nbsp;sender: broadcast::Sender&lt;Payload&gt;,</div>
+            <div>}</div>
+            <br>
+            <div><span class="keyword">impl</span> EventBus {</div>
+            <div>&nbsp;&nbsp;<span class="keyword">pub fn</span> <span class="function">new</span>(capacity: usize) -> <span class="keyword">Self</span> {</div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> (tx, _) = broadcast::channel(capacity);</div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Self</span> { sender: tx }</div>
+            <div>&nbsp;&nbsp;}</div>
+            <div>}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-visual is-active" data-index="0">
+        <img src="https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?q=80&w=1600&auto=format&fit=crop" alt="Vanguard Engine">
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Core Elements
+      const leftPanel = document.getElementById('left-panel');
+      const rightPanel = document.getElementById('right-panel');
+      const leftSlides = document.querySelectorAll('.slide-content');
+      const rightSlides = document.querySelectorAll('.slide-visual');
+      const dotsContainer = document.getElementById('dots-container');
+      
+      const slideLength = leftSlides.length;
+      let activeIndex = 0;
+      let isAnimating = false;
+
+      // 1. Initial Setup
+      // Position the right panel so the last element in its DOM (Visual 1) is visible at the top.
+      rightPanel.style.top = `-${(slideLength - 1) * 100}vh`;
+
+      // Generate Pagination Dots
+      for (let i = 0; i < slideLength; i++) {
+        const dot = document.createElement('div');
+        dot.classList.add('dot');
+        if (i === 0) dot.classList.add('is-active');
+        dot.addEventListener('click', () => changeSlide(i));
+        dotsContainer.appendChild(dot);
+      }
+      const dots = document.querySelectorAll('.dot');
+
+      // 2. Core Transition Logic
+      const changeSlide = (index) => {
+        // Prevent action if currently animating, out of bounds, or already on the requested slide
+        if (isAnimating || index < 0 || index >= slideLength || index === activeIndex) return;
+        
+        isAnimating = true;
+        activeIndex = index;
+
+        // Apply Translations
+        // Left goes UP (negative)
+        leftPanel.style.transform = `translateY(-${activeIndex * 100}vh)`;
+        // Right goes DOWN (positive)
+        rightPanel.style.transform = `translateY(${activeIndex * 100}vh)`;
+
+        // Update CSS classes for text staggers and image settling
+        leftSlides.forEach(slide => slide.classList.remove('is-active'));
+        rightSlides.forEach(slide => slide.classList.remove('is-active'));
+        dots.forEach(dot => dot.classList.remove('is-active'));
+
+        // Target the specific slides
+        document.querySelector(`.slide-content[data-index="${activeIndex}"]`).classList.add('is-active');
+        document.querySelector(`.slide-visual[data-index="${activeIndex}"]`).classList.add('is-active');
+        dots[activeIndex].classList.add('is-active');
+
+        // Unlock after CSS transition duration (1000ms)
+        setTimeout(() => {
+          isAnimating = false;
+        }, 1000); 
+      };
+
+      // 3. Event Listeners (Scroll & Keyboard)
+      
+      // Mouse Wheel Hijacking
+      window.addEventListener('wheel', (e) => {
+        // Disable JS scrolling on mobile screens where standard CSS scrolling takes over
+        if (window.innerWidth <= 900) return;
+        
+        if (e.deltaY > 0) {
+          changeSlide(activeIndex + 1); // Scroll Down -> Next Slide
+        } else if (e.deltaY < 0) {
+          changeSlide(activeIndex - 1); // Scroll Up -> Prev Slide
+        }
+      });
+
+      // Keyboard Navigation
+      window.addEventListener('keydown', (e) => {
+        if (window.innerWidth <= 900) return;
+
+        if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+          changeSlide(activeIndex + 1);
+        } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+          changeSlide(activeIndex - 1);
+        }
+      });
+
+      // Touch Swiping (For tablets in landscape, or generic touch devices > 900px width)
+      let touchStartY = 0;
+      window.addEventListener('touchstart', (e) => {
+        touchStartY = e.touches[0].clientY;
+      });
+      window.addEventListener('touchend', (e) => {
+        if (window.innerWidth <= 900) return;
+        const touchEndY = e.changedTouches[0].clientY;
+        const delta = touchStartY - touchEndY;
+        
+        if (delta > 50) {
+          changeSlide(activeIndex + 1); // Swiped up
+        } else if (delta < -50) {
+          changeSlide(activeIndex - 1); // Swiped down
+        }
+      });
+    });
+  </script>
+</body>
+</html>
